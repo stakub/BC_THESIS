@@ -23,12 +23,16 @@ from . import mdp
 # Pre-defined configs
 ##
 
-from isaaclab_assets.robots.cartpole import CARTPOLE_CFG  # isort:skip
+# from isaaclab_assets.robots.cartpole import CARTPOLE_CFG  # isort:skip
+
+from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 
 
 ##
 # Scene definition
 ##
+
+TABLE_URL = "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Props/PackingTable/packing_table.usd"
 
 
 @configclass
@@ -50,8 +54,9 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DomeLightCfg(color=(0.9, 0.9, 0.9), intensity=500.0),
     )
     table = AssetBaseCfg(
-        prim_path="/World/table",
-        initial_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.0, 0.0])
+        prim_path="{ENV_REGEX_NS}/Table",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.0, 0.0]),
+        spawn=UsdFileCfg(usd_path=TABLE_URL)
     )
 
     # https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Props/PackingTable/packing_table.usd
@@ -62,98 +67,98 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
 ##
 
 
-@configclass
-class ActionsCfg:
-    """Action specifications for the MDP."""
+# @configclass
+# class ActionsCfg:
+#     """Action specifications for the MDP."""
 
-    joint_effort = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=100.0)
-
-
-@configclass
-class ObservationsCfg:
-    """Observation specifications for the MDP."""
-
-    @configclass
-    class PolicyCfg(ObsGroup):
-        """Observations for policy group."""
-
-        # observation terms (order preserved)
-        joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
-
-        def __post_init__(self) -> None:
-            self.enable_corruption = False
-            self.concatenate_terms = True
-
-    # observation groups
-    policy: PolicyCfg = PolicyCfg()
+#     # joint_effort = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=100.0)
 
 
-@configclass
-class EventCfg:
-    """Configuration for events."""
+# @configclass
+# class ObservationsCfg:
+#     """Observation specifications for the MDP."""
 
-    # reset
-    reset_cart_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]),
-            "position_range": (-1.0, 1.0),
-            "velocity_range": (-0.5, 0.5),
-        },
-    )
+#     @configclass
+#     class PolicyCfg(ObsGroup):
+#         """Observations for policy group."""
 
-    reset_pole_position = EventTerm(
-        func=mdp.reset_joints_by_offset,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]),
-            "position_range": (-0.25 * math.pi, 0.25 * math.pi),
-            "velocity_range": (-0.25 * math.pi, 0.25 * math.pi),
-        },
-    )
+#         # observation terms (order preserved)
+#         joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
+#         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
+
+#         def __post_init__(self) -> None:
+#             self.enable_corruption = False
+#             self.concatenate_terms = True
+
+#     # observation groups
+#     policy: PolicyCfg = PolicyCfg()
 
 
-@configclass
-class RewardsCfg:
-    """Reward terms for the MDP."""
+# @configclass
+# class EventCfg:
+#     """Configuration for events."""
 
-    # (1) Constant running reward
-    alive = RewTerm(func=mdp.is_alive, weight=1.0)
-    # (2) Failure penalty
-    terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
-    # (3) Primary task: keep pole upright
-    pole_pos = RewTerm(
-        func=mdp.joint_pos_target_l2,
-        weight=-1.0,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]), "target": 0.0},
-    )
-    # (4) Shaping tasks: lower cart velocity
-    cart_vel = RewTerm(
-        func=mdp.joint_vel_l1,
-        weight=-0.01,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"])},
-    )
-    # (5) Shaping tasks: lower pole angular velocity
-    pole_vel = RewTerm(
-        func=mdp.joint_vel_l1,
-        weight=-0.005,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"])},
-    )
+#     # reset
+#     reset_cart_position = EventTerm(
+#         func=mdp.reset_joints_by_offset,
+#         mode="reset",
+#         params={
+#             "asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]),
+#             "position_range": (-1.0, 1.0),
+#             "velocity_range": (-0.5, 0.5),
+#         },
+#     )
+
+#     reset_pole_position = EventTerm(
+#         func=mdp.reset_joints_by_offset,
+#         mode="reset",
+#         params={
+#             "asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]),
+#             "position_range": (-0.25 * math.pi, 0.25 * math.pi),
+#             "velocity_range": (-0.25 * math.pi, 0.25 * math.pi),
+#         },
+    # )
 
 
-@configclass
-class TerminationsCfg:
-    """Termination terms for the MDP."""
+# @configclass
+# class RewardsCfg:
+#     """Reward terms for the MDP."""
 
-    # (1) Time out
-    time_out = DoneTerm(func=mdp.time_out, time_out=True)
-    # (2) Cart out of bounds
-    cart_out_of_bounds = DoneTerm(
-        func=mdp.joint_pos_out_of_manual_limit,
-        params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]), "bounds": (-3.0, 3.0)},
-    )
+#     # (1) Constant running reward
+#     alive = RewTerm(func=mdp.is_alive, weight=1.0)
+#     # (2) Failure penalty
+#     terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
+#     # (3) Primary task: keep pole upright
+#     pole_pos = RewTerm(
+#         func=mdp.joint_pos_target_l2,
+#         weight=-1.0,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]), "target": 0.0},
+#     )
+#     # (4) Shaping tasks: lower cart velocity
+#     cart_vel = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-0.01,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"])},
+#     )
+#     # (5) Shaping tasks: lower pole angular velocity
+#     pole_vel = RewTerm(
+#         func=mdp.joint_vel_l1,
+#         weight=-0.005,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"])},
+#     )
+
+
+# @configclass
+# class TerminationsCfg:
+#     """Termination terms for the MDP."""
+
+#     # (1) Time out
+#     time_out = DoneTerm(func=mdp.time_out, time_out=True)
+#     # (2) Cart out of bounds
+#     cart_out_of_bounds = DoneTerm(
+#         func=mdp.joint_pos_out_of_manual_limit,
+#         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]), "bounds": (-3.0, 3.0)},
+#     )
 
 
 ##
@@ -165,13 +170,13 @@ class TerminationsCfg:
 class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
     scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=4096, env_spacing=4.0)
-    # Basic settings
-    observations: ObservationsCfg = ObservationsCfg()
-    actions: ActionsCfg = ActionsCfg()
-    events: EventCfg = EventCfg()
-    # MDP settings
-    rewards: RewardsCfg = RewardsCfg()
-    terminations: TerminationsCfg = TerminationsCfg()
+    # # Basic settings
+    # observations: ObservationsCfg = ObservationsCfg()
+    # actions: ActionsCfg = ActionsCfg()
+    # events: EventCfg = EventCfg()
+    # # MDP settings
+    # rewards: RewardsCfg = RewardsCfg()
+    # terminations: TerminationsCfg = TerminationsCfg()
 
     # Post initialization
     def __post_init__(self) -> None:
