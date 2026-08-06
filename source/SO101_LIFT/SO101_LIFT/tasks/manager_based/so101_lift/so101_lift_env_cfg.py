@@ -33,6 +33,7 @@ from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 ##
 
 TABLE_URL = "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Props/PackingTable/packing_table.usd"
+ARM_URDF = "/opt/IsaacSim/custom_projects/so-101/SO-ARM100/Simulation/SO101/so101_new_calib.urdf"
 
 
 @configclass
@@ -46,7 +47,9 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
     # )
 
     # robot
-    # robot: ArticulationCfg = CARTPOLE_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+    robot: ArticulationCfg = ArticulationCfg(
+        spawn=UsdFileCfg(usd_path=)
+    )
 
     # lights
     dome_light = AssetBaseCfg(
