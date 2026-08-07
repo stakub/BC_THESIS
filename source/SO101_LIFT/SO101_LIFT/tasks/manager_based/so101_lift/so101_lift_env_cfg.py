@@ -147,11 +147,11 @@ class EventCfg:
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
-    # reaching_object = RewTerm(
-    #     func=mdp.object_ee_distance,
-    #     weight=1.0,
-    #     params={"std": 0.1, "object_cfg": SceneEntityCfg("cube"), "ee_frame_cfg": SceneEntityCfg("Robot/jaw")}
-    # )
+    reaching_object = RewTerm(
+        func=mdp.object_ee_distance,
+        weight=1.0,
+        params={"std": 0.1, "object_cfg": SceneEntityCfg("cube")}
+    )
 
     # # sparse-ish: reward for lifting the cube above a minimal height threshold
     # lifting_object = RewTerm(
