@@ -1,7 +1,7 @@
 # Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
-# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-License-Identifier: BSD-3-RClause
 
 import math
 
@@ -18,7 +18,8 @@ from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg, JointPositionActionCfg
 from isaaclab.controllers import DifferentialIKControllerCfg
-
+from isaaclab.sensors import FrameTransformerCfg
+from isaaclab.sensors.frame_transformer import OffsetCfg
 from . import mdp
 
 ##
@@ -42,6 +43,17 @@ ARM_URDF = "/opt/IsaacSim/custom_projects/so-101/SO-ARM100/Simulation/SO101/so10
 @configclass
 class So101LiftSceneCfg(InteractiveSceneCfg):
     """Configuration for a cart-pole scene."""
+
+    ee_frame = FrameTransformerCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/base",
+        target_frames=[
+            FrameTransformerCfg.FrameCfg(
+                prim_path="{ENV_REGEX_NS}/Robot/jaw",
+                name="ee_frame",
+                offset=OffsetCfg(pos=(0.0, 0.0, 0.0))
+            )
+        ]
+    )
 
     # ground plane
     ground = AssetBaseCfg(
@@ -135,37 +147,37 @@ class EventCfg:
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
-    reaching_object = RewTerm(
-        func=mdp.object_ee_distance,
-        weight=1.0,
-        params={"std": 0.1, "object_cfg": SceneEntityCfg("Cube"), "ee_frame_cfg": SceneEntityCfg("jaw")}
-    )
+    # reaching_object = RewTerm(
+    #     func=mdp.object_ee_distance,
+    #     weight=1.0,
+    #     params={"std": 0.1, "object_cfg": SceneEntityCfg("cube"), "ee_frame_cfg": SceneEntityCfg("Robot/jaw")}
+    # )
 
+    # # sparse-ish: reward for lifting the cube above a minimal height threshold
+    # lifting_object = RewTerm(
+    #     func=mdp.object_is_lifted,
+    #     weight=15.0,
+    #     params={"minimal_height": 0.04, "object_cfg": SceneEntityCfg("cube")},
+    # )
 
-    # sparse-ish: reward for lifting the cube above a minimal height threshold
-    lifting_object = RewTerm(
-        func=mdp.object_is_lifted,
-        weight=15.0,
-        params={"minimal_height": 0.04, "object_cfg": SceneEntityCfg("Cube")},
-    )
+    # # dense: once lifted, reward tracking toward the target height/position
+    # object_goal_tracking = RewTerm(
+    #     func=mdp.object_goal_distance,
+    #     weight=16.0,
+    #     params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
+    # )
 
-    # dense: once lifted, reward tracking toward the target height/position
-    object_goal_tracking = RewTerm(
-        func=mdp.object_goal_distance,
-        weight=16.0,
-        params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
-    )
+    # # penalty: discourage large/jerky actions
+    # action_rate = RewTerm(
+    #     func=mdp.action_rate_l2,
+    #     weight=-1e-4,
+    # )
 
-    # penalty: discourage large/jerky actions
-    action_rate = RewTerm(
-        func=mdp.action_rate_l2,
-        weight=-1e-4,
-    )
+    # # penalty: discourage excessive joint velocity
+    # joint_vel = RewTerm(
+    #     func=mdp.joint_vel_l2,
+    #     weight=-1e-4)
 
-    # penalty: discourage excessive joint velocity
-    joint_vel = RewTerm(
-        func=mdp.joint_vel_l2,
-       
     # # (1) Constant running reward
     # alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # # (2) Failure penalty

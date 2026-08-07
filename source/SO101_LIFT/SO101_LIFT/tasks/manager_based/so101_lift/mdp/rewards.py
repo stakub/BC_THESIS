@@ -75,7 +75,7 @@ class object_goal_distance(ManagerTermBase):
         minimal_height: float,
         command_name: str,
         robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
-        object_cfg: SceneEntityCfg = SceneEntityCfg("Cube"),  # TODO: change this later to object
+        object_cfg: SceneEntityCfg = SceneEntityCfg("cube"),  # TODO: change this later to object
         success_threshold: float | None = None,
     ) -> torch.Tensor:
         robot: RigidObject = env.scene[robot_cfg.name]
