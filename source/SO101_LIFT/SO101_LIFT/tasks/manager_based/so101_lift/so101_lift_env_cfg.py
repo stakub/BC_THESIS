@@ -92,20 +92,19 @@ class ActionsCfg:
 class ObservationsCfg:
     """Observation specifications for the MDP."""
 
-    # @configclass
-    # class PolicyCfg(ObsGroup):
-    #     """Observations for policy group."""
+    @configclass
+    class PolicyCfg(ObsGroup):
+        """Observations for policy group."""
 
-    #     # observation terms (order preserved)
-    #     joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
-    #     joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
+        # observation terms (order preserved)
+        cube_pos = ObsTerm(func=mdp.joint_pos_rel)
 
-    #     def __post_init__(self) -> None:
-    #         self.enable_corruption = False
-    #         self.concatenate_terms = True
+        def __post_init__(self) -> None:
+            self.enable_corruption = False
+            self.concatenate_terms = True
 
-    # # observation groups
-    # policy: PolicyCfg = PolicyCfg()
+    # observation groups
+    policy: PolicyCfg = PolicyCfg()
 
 
 @configclass
@@ -199,7 +198,7 @@ class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 5
+        self.episode_length_s = 7
         # viewer settings
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings
