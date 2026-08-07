@@ -57,10 +57,10 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
     )
 
     # ground plane
-    ground = AssetBaseCfg(
-        prim_path="/World/ground",
-        spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
-    )
+    # ground = AssetBaseCfg(
+    #     prim_path="/World/ground",
+    #     spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
+    # )
 
     # robot
     robot: ArticulationCfg = SO101_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
@@ -203,12 +203,12 @@ class TerminationsCfg:
     pass
 
     # # (1) Time out
-    # time_out = DoneTerm(func=mdp.time_out, time_out=True)
+    time_out = DoneTerm(func=mdp.time_out, time_out=True)
     # # (2) Cart out of bounds
-    # cart_out_of_bounds = DoneTerm(
-    #     func=mdp.joint_pos_out_of_manual_limit,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"]), "bounds": (-3.0, 3.0)},
-    # )
+    object_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum,
+        params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("cube")},
+    )
 
 
 ##
