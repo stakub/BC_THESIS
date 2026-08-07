@@ -14,6 +14,7 @@ from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
+from isaaclab.managers import CommandTermCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg, JointPositionActionCfg
@@ -145,6 +146,23 @@ class EventCfg:
 
 
 @configclass
+class CommandsCfg:
+    object_pose = mdp.UniformPoseCommandCfg(
+        asset_name="robot",
+        body_name="jaw",  # or whichever link/frame you're tracking
+        resampling_time_range=(5.0, 5.0),  # how often to resample a new goal, in seconds
+        debug_vis=True,
+        ranges=mdp.UniformPoseCommandCfg.Ranges(
+            pos_x=(0.0, 0.05),
+            pos_y=(-0.6, -0.5),
+            pos_z=(0.3, 0.4),  # your target lift height range
+            roll=(0.0, 0.0),
+            pitch=(0.0, 0.0),
+            yaw=(0.0, 0.0),
+        ),
+    )
+
+@configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
     reaching_object = RewTerm(
@@ -153,19 +171,19 @@ class RewardsCfg:
         params={"std": 0.1, "object_cfg": SceneEntityCfg("cube")}
     )
 
-    # # sparse-ish: reward for lifting the cube above a minimal height threshold
-    # lifting_object = RewTerm(
-    #     func=mdp.object_is_lifted,
-    #     weight=15.0,
-    #     params={"minimal_height": 0.04, "object_cfg": SceneEntityCfg("cube")},
-    # )
+    # sparse-ish: reward for lifting the cube above a minimal height threshold
+    lifting_object = RewTerm(
+        func=mdp.object_is_lifted,
+        weight=15.0,
+        params={"minimal_height": 0.04, "object_cfg": SceneEntityCfg("cube")},
+    )
 
-    # # dense: once lifted, reward tracking toward the target height/position
-    # object_goal_tracking = RewTerm(
-    #     func=mdp.object_goal_distance,
-    #     weight=16.0,
-    #     params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
-    # )
+    # dense: once lifted, reward tracking toward the target height/position
+    object_goal_tracking = RewTerm(
+        func=mdp.object_goal_distance,
+        weight=16.0,
+        params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
+    )
 
     # # penalty: discourage large/jerky actions
     # action_rate = RewTerm(
@@ -232,6 +250,7 @@ class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
     # MDP settings
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
+    commands: CommandsCfg = CommandsCfg()
 
     # Post initialization
     def __post_init__(self) -> None:

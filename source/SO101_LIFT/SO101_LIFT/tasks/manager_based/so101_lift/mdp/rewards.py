@@ -23,7 +23,7 @@ def object_is_lifted(
 ) -> torch.Tensor:
     """Reward the agent for lifting the object above the minimal height."""
     object: RigidObject = env.scene[object_cfg.name]
-    return torch.where(object.data.root_pos_w.torch[:, 2] > minimal_height, 1.0, 0.0)
+    return torch.where(object.data.root_pos_w[:, 2] > minimal_height, 1.0, 0.0)
 
 
 def object_ee_distance(
@@ -39,7 +39,7 @@ def object_ee_distance(
     # Target object position: (num_envs, 3)
     cube_pos_w = object.data.root_pos_w
     # End-effector position: (num_envs, 3)
-    ee_w = ee_frame.data.target_pos_w[..., 0, :] # TODO: this is propably wrong, the dimensions do not add up
+    ee_w = ee_frame.data.target_pos_w[..., 0, :]  # TODO: this is propably wrong, the dimensions do not add up
     # Distance of the end-effector to the object: (num_envs,)
     object_ee_distance = torch.linalg.norm(cube_pos_w - ee_w, dim=1)
 
@@ -82,9 +82,9 @@ class object_goal_distance(ManagerTermBase):
         obj: RigidObject = env.scene[object_cfg.name]
         command = env.command_manager.get_command(command_name)
         des_pos_w, _ = combine_frame_transforms(
-            robot.data.root_pos_w.torch, robot.data.root_quat_w.torch, command[:, :3]
+            robot.data.root_pos_w, robot.data.root_quat_w, command[:, :3]
         )
-        object_pos_w = obj.data.root_pos_w.torch
+        object_pos_w = obj.data.root_pos_w
         distance = torch.linalg.norm(des_pos_w - object_pos_w, dim=1)
         is_lifted = object_pos_w[:, 2] > minimal_height
         if success_threshold is not None:
