@@ -135,7 +135,37 @@ class EventCfg:
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
-    pass
+    reaching_object = RewTerm(
+        func=mdp.object_ee_distance,
+        weight=1.0,
+        params={"std": 0.1, "object_cfg": SceneEntityCfg("Cube"), "ee_frame_cfg": SceneEntityCfg("jaw")}
+    )
+
+
+    # sparse-ish: reward for lifting the cube above a minimal height threshold
+    lifting_object = RewTerm(
+        func=mdp.object_is_lifted,
+        weight=15.0,
+        params={"minimal_height": 0.04, "object_cfg": SceneEntityCfg("Cube")},
+    )
+
+    # dense: once lifted, reward tracking toward the target height/position
+    object_goal_tracking = RewTerm(
+        func=mdp.object_goal_distance,
+        weight=16.0,
+        params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
+    )
+
+    # penalty: discourage large/jerky actions
+    action_rate = RewTerm(
+        func=mdp.action_rate_l2,
+        weight=-1e-4,
+    )
+
+    # penalty: discourage excessive joint velocity
+    joint_vel = RewTerm(
+        func=mdp.joint_vel_l2,
+       
     # # (1) Constant running reward
     # alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # # (2) Failure penalty
