@@ -8,4 +8,4 @@ CUBE_CFG = RigidObjectCfg(spawn=sim_utils.CuboidCfg(size=(0.03, 0.03, 0.03), mas
                                                     rigid_props=sim_utils.RigidBodyPropertiesCfg(),
                                                     collision_props=sim_utils.CollisionPropertiesCfg(),
                                                     visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=CUBE_COLOR,
-                                                    metallic=0.0)), init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.3, 0.0, 1.15)))
+                                                    metallic=0.0)), init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.3, 0.0, 1.10)))
