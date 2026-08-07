@@ -6,7 +6,7 @@
 import math
 
 import isaaclab.sim as sim_utils
-from isaaclab.assets import ArticulationCfg, AssetBaseCfg
+from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
@@ -27,6 +27,7 @@ from . import mdp
 
 from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from ....assets.so101 import SO101_CFG
+from ....assets.cube import CUBE_CFG
 
 ##
 # Scene definition
@@ -59,6 +60,8 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.0, 0.0]),
         spawn=UsdFileCfg(usd_path=TABLE_URL)
     )
+
+    cube: RigidObjectCfg = CUBE_CFG.replace(prim_path="{ENV_REGEX_NS}/Cube")
 
     # https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Props/PackingTable/packing_table.usd
 
