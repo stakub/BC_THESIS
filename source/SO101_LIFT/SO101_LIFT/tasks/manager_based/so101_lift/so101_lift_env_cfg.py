@@ -129,7 +129,7 @@ class EventCfg:
         func=mdp.reset_joints_by_offset,
         mode="reset",
         params={
-            "asset_cfg": SceneEntityCfg("robot"),
+            "asset_cfg": SceneEntityCfg("robot", joint_names=SO101_GRIPPER_JOINTS + SO101_IK_JOINTS),
             "position_range": (-0.05, 0.05),
             "velocity_range": (0.0, 0.0),
         },
@@ -154,8 +154,8 @@ class CommandsCfg:
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(0.0, 0.05),
-            pos_y=(-0.6, -0.5),
-            pos_z=(0.3, 0.4),  # your target lift height range
+            pos_y=(-0.25, -0.2),
+            pos_z=(0.2, 0.3),  # your target lift height range
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
             yaw=(0.0, 0.0),
@@ -185,39 +185,16 @@ class RewardsCfg:
         params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
     )
 
-    # # penalty: discourage large/jerky actions
-    # action_rate = RewTerm(
-    #     func=mdp.action_rate_l2,
-    #     weight=-1e-4,
-    # )
+    # penalty: discourage large/jerky actions
+    action_rate = RewTerm(
+        func=mdp.action_rate_l2,
+        weight=-1e-4,
+    )
 
-    # # penalty: discourage excessive joint velocity
-    # joint_vel = RewTerm(
-    #     func=mdp.joint_vel_l2,
-    #     weight=-1e-4)
-
-    # # (1) Constant running reward
-    # alive = RewTerm(func=mdp.is_alive, weight=1.0)
-    # # (2) Failure penalty
-    # terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
-    # # (3) Primary task: keep pole upright
-    # pole_pos = RewTerm(
-    #     func=mdp.joint_pos_target_l2,
-    #     weight=-1.0,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"]), "target": 0.0},
-    # )
-    # # (4) Shaping tasks: lower cart velocity
-    # cart_vel = RewTerm(
-    #     func=mdp.joint_vel_l1,
-    #     weight=-0.01,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["slider_to_cart"])},
-    # )
-    # # (5) Shaping tasks: lower pole angular velocity
-    # pole_vel = RewTerm(
-    #     func=mdp.joint_vel_l1,
-    #     weight=-0.005,
-    #     params={"asset_cfg": SceneEntityCfg("robot", joint_names=["cart_to_pole"])},
-    # )
+    # penalty: discourage excessive joint velocity
+    joint_vel = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-1e-4)
 
 
 @configclass
