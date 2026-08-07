@@ -16,6 +16,8 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
+from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg, JointPositionActionCfg
+from isaaclab.controllers import DifferentialIKControllerCfg
 
 from . import mdp
 
@@ -26,7 +28,7 @@ from . import mdp
 # from isaaclab_assets.robots.cartpole import CARTPOLE_CFG  # isort:skip
 
 from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
-from ....assets.so101 import SO101_CFG
+from ....assets.so101 import SO101_CFG, SO101_IK_JOINTS, SO101_GRIPPER_JOINTS, SO101_END_EFFECTOR
 from ....assets.cube import CUBE_CFG
 
 ##
@@ -76,13 +78,19 @@ class ActionsCfg:
     """Action specifications for the MDP."""
 
     # joint_effort = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=100.0)
-    pass
+    arm_action = DifferentialInverseKinematicsActionCfg(asset_name="robot", joint_names=SO101_IK_JOINTS,
+                                                        body_name=SO101_END_EFFECTOR,
+                                                        controller=DifferentialIKControllerCfg(
+                                                            command_type="pose",
+                                                            use_relative_mode=True,
+                                                            ik_method="dls"
+                                                        ))
+    gripper_action = JointPositionActionCfg(asset_name="robot", joint_names=SO101_GRIPPER_JOINTS, scale=0.5)
 
 
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
-    pass
 
     # @configclass
     # class PolicyCfg(ObsGroup):

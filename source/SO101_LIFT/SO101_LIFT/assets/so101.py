@@ -23,6 +23,11 @@ from isaacsim.core.utils.rotations import euler_angles_to_quat
 
 here = os.path.dirname(os.path.abspath(__file__))
 
+SO101_IK_JOINTS = ["Rotation", "Pitch", "Elbow", "Wrist_Pitch", "Wrist_Roll"]
+SO101_GRIPPER_JOINTS = ["Jaw"]
+SO101_END_EFFECTOR = "jaw"
+
+
 SO101_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
         usd_path=f"{here}/files/SO-ARM101-USD.usd",
