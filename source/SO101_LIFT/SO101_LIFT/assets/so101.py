@@ -47,7 +47,7 @@ SO101_CFG = ArticulationCfg(
             "Wrist_Roll": -1.6034,
             "Jaw": -0.1465,
         },
-        pos=(-0.05, 0.0, 10),
+        pos=(-0.5, 0.0, 1.0),
         rot=euler_angles_to_quat(np.array([0, 0, 90]), degrees=True),
 
     ),

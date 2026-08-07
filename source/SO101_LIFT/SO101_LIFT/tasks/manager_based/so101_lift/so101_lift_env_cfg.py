@@ -26,7 +26,7 @@ from . import mdp
 # from isaaclab_assets.robots.cartpole import CARTPOLE_CFG  # isort:skip
 
 from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
-
+from ....assets.so101 import SO101_CFG
 
 ##
 # Scene definition
@@ -41,15 +41,13 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
     """Configuration for a cart-pole scene."""
 
     # ground plane
-    # ground = AssetBaseCfg(
-    #     prim_path="/World/ground",
-    #     spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
-    # )
+    ground = AssetBaseCfg(
+        prim_path="/World/ground",
+        spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
+    )
 
     # robot
-    robot: ArticulationCfg = ArticulationCfg(
-        spawn=UsdFileCfg(usd_path=)
-    )
+    robot: ArticulationCfg = SO101_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
     # lights
     dome_light = AssetBaseCfg(
@@ -176,7 +174,7 @@ class TerminationsCfg:
 @configclass
 class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
-    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=4096, env_spacing=4.0)
+    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=1, env_spacing=4.0)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
