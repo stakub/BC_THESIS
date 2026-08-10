@@ -162,6 +162,7 @@ class CommandsCfg:
         ),
     )
 
+
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
@@ -219,7 +220,7 @@ class TerminationsCfg:
 @configclass
 class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
-    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=1, env_spacing=4.0)
+    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=4048, env_spacing=4.0)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

@@ -4,9 +4,9 @@ params:
   # environment wrapper clipping
   env:
     # added to the wrapper
-    clip_observations: 5.0
+    clip_observations: 100.0
     # can make custom wrapper?
-    clip_actions: 1.0
+    clip_actions: 100.0
 
   algo:
     name: a2c_continuous
@@ -30,7 +30,7 @@ params:
           val: 0
         fixed_sigma: True
     mlp:
-      units: [32, 32]
+      units: [256, 128, 64]
       activation: elu
       d2rl: False
 
@@ -43,7 +43,7 @@ params:
   load_path: '' # path to the checkpoint to load
 
   config:
-    name: cartpole_direct
+    name: so101_lift
     env_name: rlgpu
     device: 'cuda:0'
     device_name: 'cuda:0'
@@ -58,19 +58,19 @@ params:
     normalize_advantage: True
     gamma: 0.99
     tau : 0.95
-    learning_rate: 5e-4
+    learning_rate: 1e-4
     lr_schedule: adaptive
-    kl_threshold: 0.008
-    score_to_win: 20000
-    max_epochs: 150
-    save_best_after: 50
-    save_frequency: 25
+    kl_threshold: 0.01
+    score_to_win: 100000000
+    max_epochs: 1500
+    save_best_after: 100
+    save_frequency: 50
     grad_norm: 1.0
-    entropy_coef: 0.0
+    entropy_coef: 0.001
     truncate_grads: True
     e_clip: 0.2
-    horizon_length: 32
-    minibatch_size: 16384
+    horizon_length: 24
+    minibatch_size: 24576
     mini_epochs: 8
     critic_coef: 4
     clip_value: True
