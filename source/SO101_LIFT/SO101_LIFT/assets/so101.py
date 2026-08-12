@@ -53,7 +53,7 @@ SO101_CFG = ArticulationCfg(
             "Jaw": -0.1465,
         },
         pos=(-0.5, 0.0, 1.0),
-        rot=euler_angles_to_quat(np.array([0, 0, 90]), degrees=True),
+        rot=euler_angles_to_quat(np.array([0, 0, 90]), degrees=True).tolist(),
 
     ),
     actuators={
