@@ -140,7 +140,8 @@ class EventCfg:
         mode="reset",
         params={
             "pose_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (0.0, 0.0)},
-            "velocity_range": {}
+            "velocity_range": {},
+            "asset_cfg": SceneEntityCfg("cube")
         },
     )
 
@@ -176,14 +177,14 @@ class RewardsCfg:
     lifting_object = RewTerm(
         func=mdp.object_is_lifted,
         weight=15.0,
-        params={"minimal_height": 0.04, "object_cfg": SceneEntityCfg("cube")},
+        params={"minimal_height": 1.10, "object_cfg": SceneEntityCfg("cube")},
     )
 
     # dense: once lifted, reward tracking toward the target height/position
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
         weight=16.0,
-        params={"std": 0.3, "minimal_height": 1.15, "command_name": "object_pose"},
+        params={"std": 0.3, "minimal_height": 1.10, "command_name": "object_pose"},
     )
 
     # penalty: discourage large/jerky actions
@@ -208,7 +209,7 @@ class TerminationsCfg:
     # # (2) Cart out of bounds
     object_dropping = DoneTerm(
         func=mdp.root_height_below_minimum,
-        params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("cube")},
+        params={"minimum_height": 0.80, "asset_cfg": SceneEntityCfg("cube")},
     )
 
 
