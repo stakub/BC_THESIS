@@ -11,6 +11,7 @@ import argparse
 
 from isaaclab.app import AppLauncher
 
+
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Zero agent for Isaac Lab environments.")
 parser.add_argument(
@@ -36,6 +37,7 @@ import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import parse_env_cfg
 
 import SO101_LIFT.tasks  # noqa: F401
+from isaacsim.core.utils.bounds import compute_combined_aabb, create_bbox_cache
 
 
 def main():
@@ -55,6 +57,12 @@ def main():
     # simulate environment
     while simulation_app.is_running():
         # run everything in inference mode
+        # bbox_cache = create_bbox_cache()
+        # table_prim_path = "/World/envs/env_0/Table"  # adjust to match your actual prim path
+        # aabb = compute_combined_aabb(bbox_cache, [table_prim_path])
+        # print("Table AABB (min, max):", aabb)  # returns [xmin, ymin, zmin, xmax, ymax, zmax]
+        # table_top_z = aabb[5]  # zmax = top surface height
+        # print("Table top surface z:", table_top_z)
         with torch.inference_mode():
             # compute zero actions
             actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)

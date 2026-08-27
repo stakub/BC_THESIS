@@ -152,7 +152,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name="jaw",  # or whichever link/frame you're tracking
         resampling_time_range=(5.0, 5.0),  # how often to resample a new goal, in seconds
-        debug_vis=True,
+        # debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(0.0, 0.05),
             pos_y=(-0.25, -0.2),
@@ -221,7 +221,7 @@ class TerminationsCfg:
 @configclass
 class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
-    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=1024, env_spacing=4.0)
+    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=1024, env_spacing=4.0)  # 1024 envs
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
