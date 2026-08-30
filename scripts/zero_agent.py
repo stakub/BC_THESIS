@@ -63,6 +63,7 @@ def main():
         # print("Table AABB (min, max):", aabb)  # returns [xmin, ymin, zmin, xmax, ymax, zmax]
         # table_top_z = aabb[5]  # zmax = top surface height
         # print("Table top surface z:", table_top_z)
+        print(env.unwrapped.scene["cube"].data.root_pos_w[:, 2])  # confirm resting height right after reset
         with torch.inference_mode():
             # compute zero actions
             actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)

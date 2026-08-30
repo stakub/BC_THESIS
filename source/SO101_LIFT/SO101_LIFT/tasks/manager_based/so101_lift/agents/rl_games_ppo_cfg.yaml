@@ -6,7 +6,7 @@ params:
     # added to the wrapper
     clip_observations: 100.0
     # can make custom wrapper?
-    clip_actions: 100.0
+    clip_actions: 1.0
 
   algo:
     name: a2c_continuous
