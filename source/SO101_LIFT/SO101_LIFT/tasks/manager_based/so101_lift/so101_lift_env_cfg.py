@@ -22,6 +22,8 @@ from isaaclab.controllers import DifferentialIKControllerCfg
 from isaaclab.sensors import FrameTransformerCfg
 from isaaclab.sensors.frame_transformer import OffsetCfg
 from . import mdp
+from isaaclab_physx.physics import PhysxCfg
+
 
 ##
 # Pre-defined configs
@@ -101,29 +103,46 @@ class ActionsCfg:
     gripper_action = JointPositionActionCfg(asset_name="robot", joint_names=SO101_GRIPPER_JOINTS, scale=0.5)
 
 
+# @configclass
+# class ObservationsCfg:
+#     """Observation specifications for the MDP."""
+
+#     @configclass
+#     class PolicyCfg(ObsGroup):
+#         """Observations for policy group."""
+
+#         # observation terms (order preserved)
+#         cube_pos = ObsTerm(func=mdp.root_pos_w, params={"asset_cfg": SceneEntityCfg("cube")})
+
+#         def __post_init__(self) -> None:
+#             self.enable_corruption = False
+#             self.concatenate_terms = True
+
+#     # observation groups
+#     policy: PolicyCfg = PolicyCfg()
+
+
 @configclass
 class ObservationsCfg:
-    """Observation specifications for the MDP."""
-
     @configclass
     class PolicyCfg(ObsGroup):
-        """Observations for policy group."""
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        actions = ObsTerm(func=mdp.last_action)
 
-        # observation terms (order preserved)
-        cube_pos = ObsTerm(func=mdp.root_pos_w, params={"asset_cfg": SceneEntityCfg("cube")})
-
-        def __post_init__(self) -> None:
-            self.enable_corruption = False
+        def __post_init__(self):
+            self.enable_corruption = True
             self.concatenate_terms = True
 
-    # observation groups
     policy: PolicyCfg = PolicyCfg()
 
 
 @configclass
 class EventCfg:
     """Configuration for events."""
-
+    reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
     # reset joints
     reset_robot_joints = EventTerm(
         func=mdp.reset_joints_by_offset,
@@ -242,4 +261,5 @@ class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 1 / 120
         self.sim.render_interval = self.decimation
-        self.sim.physx.gpu_collision_stack_size = 200_000_000  # ~90MB, ~1.27× the reported 70.6MB minimum
+        self.sim.physx.gpu_collision_stack_size = 1_200_000_000  # ~1.2GB, headroom above the 864MB minimum
+
