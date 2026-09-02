@@ -21,6 +21,7 @@ from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsA
 from isaaclab.controllers import DifferentialIKControllerCfg
 from isaaclab.sensors import FrameTransformerCfg
 from isaaclab.sensors.frame_transformer import OffsetCfg
+from isaaclab.managers import CurriculumTermCfg as CurrTerm
 from . import mdp
 
 
@@ -143,16 +144,6 @@ class EventCfg:
     """Configuration for events."""
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
     # reset joints
-    reset_robot_joints = EventTerm(
-        func=mdp.reset_joints_by_offset,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=SO101_GRIPPER_JOINTS + SO101_IK_JOINTS),
-            "position_range": (-0.05, 0.05),
-            "velocity_range": (0.0, 0.0),
-        },
-    )
-
     reset_cube_position = EventTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
@@ -170,7 +161,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name="jaw",  # or whichever link/frame you're tracking
         resampling_time_range=(5.0, 5.0),  # how often to resample a new goal, in seconds
-        # debug_vis=True,
+        debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(0.0, 0.05),
             pos_y=(-0.25, -0.2),
@@ -205,6 +196,11 @@ class RewardsCfg:
         params={"std": 0.3, "minimal_height": 1.10, "command_name": "object_pose"},
     )
 
+    object_goal_tracking_fine_grained = RewTerm(
+        func=mdp.object_goal_distance,
+        weight=5.0,
+        params={"std": 0.05, "minimal_height": 1.10, "command_name": "object_pose"},
+    )
     # penalty: discourage large/jerky actions
     action_rate = RewTerm(
         func=mdp.action_rate_l2,
@@ -214,13 +210,13 @@ class RewardsCfg:
     # penalty: discourage excessive joint velocity
     joint_vel = RewTerm(
         func=mdp.joint_vel_l2,
-        weight=-1e-4)
+        weight=-1e-4,
+        params={"asset_cfg": SceneEntityCfg("robot")})
 
 
 @configclass
 class TerminationsCfg:
     """Termination terms for the MDP."""
-    pass
 
     # # (1) Time out
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
@@ -230,6 +226,17 @@ class TerminationsCfg:
         params={"minimum_height": 0.80, "asset_cfg": SceneEntityCfg("cube")},
     )
 
+
+
+@configclass
+class CurriculumCfg:
+    """Curriculum terms for the MDP."""
+    action_rate = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
+    )
+    joint_vel = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+    )
 
 ##
 # Environment configuration
@@ -248,6 +255,7 @@ class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     commands: CommandsCfg = CommandsCfg()
+    curriculum: CurriculumCfg = CurriculumCfg()
 
     # Post initialization
     def __post_init__(self) -> None:
@@ -261,4 +269,3 @@ class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.dt = 1 / 120
         self.sim.render_interval = self.decimation
         self.sim.physx.gpu_collision_stack_size = 1_200_000_000  # ~1.2GB, headroom above the 864MB minimum
-
