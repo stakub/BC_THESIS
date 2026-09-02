@@ -22,7 +22,6 @@ from isaaclab.controllers import DifferentialIKControllerCfg
 from isaaclab.sensors import FrameTransformerCfg
 from isaaclab.sensors.frame_transformer import OffsetCfg
 from . import mdp
-from isaaclab_physx.physics import PhysxCfg
 
 
 ##
