@@ -154,6 +154,15 @@ class EventCfg:
         },
     )
 
+    reset_robot_joints = EventTerm(
+        func=mdp.reset_joints_by_offset,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", joint_names=SO101_GRIPPER_JOINTS + SO101_IK_JOINTS),
+            "position_range": (-0.05, 0.05),
+            "velocity_range": (0.0, 0.0),
+        })
+
 
 @configclass
 class CommandsCfg:
@@ -178,7 +187,7 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     reaching_object = RewTerm(
         func=mdp.object_ee_distance,
-        weight=1.0,
+        weight=0.3,
         params={"std": 0.1, "object_cfg": SceneEntityCfg("cube")}
     )
 
@@ -232,10 +241,10 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
     action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 5000000}
     )
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 5000000}
     )
 
 ##

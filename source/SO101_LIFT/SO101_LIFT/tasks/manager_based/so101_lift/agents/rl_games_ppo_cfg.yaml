@@ -68,11 +68,11 @@ params:
     grad_norm: 1.0
     entropy_coef: 0.001
     truncate_grads: True
-    e_clip: 0.2
+    e_clip: 0.15
     horizon_length: 24
     minibatch_size: 24576
     mini_epochs: 8
     critic_coef: 4
     clip_value: True
     seq_length: 4
-    bounds_loss_coef: 0.0001
+    bounds_loss_coef: 0.001
