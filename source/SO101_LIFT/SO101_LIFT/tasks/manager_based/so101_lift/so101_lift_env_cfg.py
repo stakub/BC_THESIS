@@ -255,7 +255,7 @@ class CurriculumCfg:
 @configclass
 class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
-    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=1024, env_spacing=4.0)  # 1024 envs
+    scene: So101LiftSceneCfg = So101LiftSceneCfg(num_envs=4096, env_spacing=4.0)  # 4096 envs
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -277,4 +277,4 @@ class So101LiftEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 1 / 120
         self.sim.render_interval = self.decimation
-        self.sim.physx.gpu_collision_stack_size = 1_200_000_000  # ~1.2GB, headroom above the 864MB minimum
+        self.sim.physx.gpu_collision_stack_size = 4_800_000_000  # ~4.8GB, headroom above the 864MB minimum
