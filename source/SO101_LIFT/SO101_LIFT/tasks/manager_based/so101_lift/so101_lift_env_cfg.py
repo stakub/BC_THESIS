@@ -172,9 +172,9 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),  # how often to resample a new goal, in seconds
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.0, 0.05),
-            pos_y=(-0.25, -0.2),
-            pos_z=(0.2, 0.3),  # your target lift height range
+            pos_x=(-0.05, 0.05),
+            pos_y=(-0.22, -0.18),
+            pos_z=(0.1, 0.15),  # your target lift height range
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
             yaw=(0.0, 0.0),
@@ -195,20 +195,20 @@ class RewardsCfg:
     lifting_object = RewTerm(
         func=mdp.object_is_lifted,
         weight=15.0,
-        params={"minimal_height": 1.10, "object_cfg": SceneEntityCfg("cube")},
+        params={"minimal_height": 1.07, "object_cfg": SceneEntityCfg("cube")},
     )
 
     # dense: once lifted, reward tracking toward the target height/position
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
         weight=16.0,
-        params={"std": 0.3, "minimal_height": 1.10, "command_name": "object_pose"},
+        params={"std": 0.3, "minimal_height": 1.07, "command_name": "object_pose"},
     )
 
     object_goal_tracking_fine_grained = RewTerm(
         func=mdp.object_goal_distance,
         weight=5.0,
-        params={"std": 0.05, "minimal_height": 1.10, "command_name": "object_pose"},
+        params={"std": 0.05, "minimal_height": 1.07, "command_name": "object_pose"},
     )
     # penalty: discourage large/jerky actions
     action_rate = RewTerm(
