@@ -187,7 +187,7 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     reaching_object = RewTerm(
         func=mdp.object_ee_distance,
-        weight=0.3,
+        weight=1.0,
         params={"std": 0.1, "object_cfg": SceneEntityCfg("cube")}
     )
 
