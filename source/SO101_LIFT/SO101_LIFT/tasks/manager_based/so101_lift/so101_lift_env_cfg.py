@@ -34,6 +34,12 @@ from . import mdp
 from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from ....assets.so101 import SO101_CFG, SO101_IK_JOINTS, SO101_GRIPPER_JOINTS, SO101_END_EFFECTOR
 from ....assets.cube import CUBE_CFG
+# from isaaclab.markers.config import FRAME_MARKER_CFG
+
+# frame_marker_small = FRAME_MARKER_CFG.copy()
+# frame_marker_small.markers["frame"].scale = (0.02, 0.02, 0.02)  # much smaller
+# frame_marker_small.prim_path = "/Visuals/EEFrameTransformer"  # any unique visualization path
+
 
 ##
 # Scene definition
@@ -49,11 +55,13 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
 
     ee_frame = FrameTransformerCfg(
         prim_path="{ENV_REGEX_NS}/Robot/base",
+        # visualizer_cfg=frame_marker_small,   # <-- this line needs to be herekc
+        # debug_vis=True,
         target_frames=[
             FrameTransformerCfg.FrameCfg(
                 prim_path="{ENV_REGEX_NS}/Robot/jaw",
                 name="ee_frame",
-                offset=OffsetCfg(pos=(0.0, 0.0, 0.0))
+                offset=OffsetCfg(pos=(-0.02, -0.045, 0.0))
             )
         ]
     )
@@ -169,7 +177,7 @@ class CommandsCfg:
     object_pose = mdp.UniformPoseCommandCfg(
         asset_name="robot",
         body_name="jaw",  # or whichever link/frame you're tracking
-        resampling_time_range=(5.0, 5.0),  # how often to resample a new goal, in seconds
+        resampling_time_range=(7.0, 8.0),  # how often to resample a new goal, in seconds
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(-0.05, 0.05),
