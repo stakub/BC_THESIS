@@ -1,0 +1,69 @@
+# rl_games SAC with the squint (train_squint.py) hyperparameters, where rl_games supports them.
+#
+# Not available in rl_games' SAC (and therefore different from squint):
+#   - distributional C51 critic ensemble -> two MSE critics, min of the two (clipped double-Q)
+#   - LayerNorm in the MLPs (only used by rl_games with d2rl)
+#   - 256 gradient updates per env step -> rl_games does 1 update per env step. Fewer parallel envs
+#     (e.g. --num_envs 128) and a larger batch partly make up for it.
+#   - delayed actor update (policy_frequency 4) -> actor is updated every step
+#
+# Train:  python scripts/rl_games/train.py --task Template-So101-Lift-v0 --agent rl_games_sac_cfg_entry_point --num_envs 128 --headless
+params:
+  seed: 1
+
+  env:
+    clip_observations: 100.0
+    # SAC actions are squashed to [-1, 1]; rl_games takes its action range from this value
+    clip_actions: 1.0
+
+  algo:
+    name: sac
+
+  model:
+    name: soft_actor_critic
+
+  network:
+    name: soft_actor_critic
+    separate: True
+    space:
+      continuous:
+    mlp:
+      units: [512, 512, 512]
+      activation: relu
+      initializer:
+        name: default
+    log_std_bounds: [-5, 2]  # squint LOG_STD_MIN / LOG_STD_MAX
+
+  load_checkpoint: False
+  load_path: ''
+
+  config:
+    name: so101_lift_sac
+    env_name: rlgpu
+    device: 'cuda:0'
+    device_name: 'cuda:0'
+    multi_gpu: False
+    normalize_input: False  # squint does not normalise observations
+    reward_shaper:
+      scale_value: 1.0  # the env reward is already squint's normalised reward
+    # one epoch = one 50-step episode on all envs
+    num_steps_per_episode: 50
+    max_env_steps: 50  # episode length; timeouts at this length are bootstrapped (squint: bootstrap_at_done=always)
+    max_epochs: 100000
+    max_frames: 10000000
+    # random actions while epoch_num < num_warmup_steps; epoch_num starts at 1, so 2 = one warm-up epoch
+    # (128 envs x 50 steps = 6400 random frames; squint: learning_starts=5000 frames)
+    num_warmup_steps: 2
+    save_best_after: 10
+    save_frequency: 50
+    score_to_win: 100000000
+    gamma: 0.9
+    init_alpha: 1.0  # squint: log_alpha initialised to 0
+    learnable_temperature: True
+    target_entropy_coef: 1.0  # target entropy = -action_dim, as in squint
+    alpha_lr: 3e-4
+    actor_lr: 3e-4
+    critic_lr: 3e-4
+    critic_tau: 0.01
+    batch_size: 4096
+    replay_buffer_size: 1000000

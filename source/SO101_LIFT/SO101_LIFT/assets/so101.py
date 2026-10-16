@@ -27,12 +27,16 @@ here = os.path.dirname(os.path.abspath(__file__))
 SO101_IK_JOINTS = ["Rotation", "Pitch", "Elbow", "Wrist_Pitch", "Wrist_Roll"]
 SO101_GRIPPER_JOINTS = ["Jaw"]
 SO101_END_EFFECTOR = "jaw"
+# Body of the fixed jaw (parent link of the "Jaw" joint). Together with the moving jaw it is used
+# for the squint grasp / table-contact checks. Change it if your USD names the body differently.
+SO101_FIXED_JAW = "gripper"
+SO101_FINGER_BODIES = [SO101_FIXED_JAW, SO101_END_EFFECTOR]
 
 
 SO101_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
         usd_path=f"{here}/files/SO-ARM101-USD.usd",
-        activate_contact_sensors=False,
+        activate_contact_sensors=True,  # required by the contact sensor used for grasp detection
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
             max_depenetration_velocity=5.0,

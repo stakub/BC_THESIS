@@ -19,5 +19,6 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": f"{__name__}.so101_lift_env_cfg:So101LiftEnvCfg",
         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg.yaml",
+        "rl_games_sac_cfg_entry_point": f"{agents.__name__}:rl_games_sac_cfg.yaml",
     },
 )

@@ -89,6 +89,29 @@ To enable your extension, follow these steps:
     - Find your extension under the `Third Party` category.
     - Toggle it to enable your extension.
 
+## Squint-style training (rl_games SAC, ground-truth state)
+
+The `Template-So101-Lift-v0` task follows the `SO101LiftCube-v1` task of
+[squint](https://github.com/aalmuzairee/squint) (`envs/lift.py`), and is trained with rl_games SAC using
+squint's hyperparameters (`agents/rl_games_sac_cfg.yaml`). Intentional differences: the policy observes the
+cube through ground-truth state (pose in the robot frame + TCP-to-cube vector) instead of the wrist-camera
+image, and the arm is controlled with inverse kinematics.
+
+- **Rewards** (`mdp/rewards.py`): reach `1 - tanh(5 d)`, `+1` grasped, `+exp(-2 |q_target - q_rest|)` while grasped,
+  `-3` fingers touching the table, `-1` while the cube is not lifted; everything divided by 3.
+- **Actions** (differs from squint): the arm is driven by differential IK with relative end-effector pose commands
+  (max 3 cm / 0.1 rad per step), the gripper by a joint position action. squint uses joint-target deltas instead.
+- **Timing**: 100 Hz physics, 10 Hz control, 50 steps (5 s) per episode, no early terminations.
+- **Success** (logged as `Metrics/success_once`, `Metrics/success_at_end`): cube lifted, grasped and the arm back
+  within 0.2 rad of the rest (initial) pose.
+- **Agent**: rl_games SAC, gamma 0.9, tau 0.01, lr 3e-4, learnable temperature. rl_games' SAC has no distributional
+  critic, no LayerNorm and only one gradient update per env step, so fewer envs are used than in squint.
+
+```bash
+python scripts/rl_games/train.py --task Template-So101-Lift-v0 --agent rl_games_sac_cfg_entry_point --num_envs 128 --headless
+python scripts/rl_games/play.py --task Template-So101-Lift-v0 --agent rl_games_sac_cfg_entry_point --num_envs 16
+```
+
 ## Code formatting
 
 We have a pre-commit template to automatically format your code.
