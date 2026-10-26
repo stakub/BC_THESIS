@@ -5,8 +5,8 @@ params:
   env:
     # added to the wrapper
     clip_observations: 100.0
-    # can make custom wrapper?
-    clip_actions: 100.0
+    # the IK / gripper action scales are defined for actions in [-1, 1]
+    clip_actions: 1.0
 
   algo:
     name: a2c_continuous
@@ -54,9 +54,9 @@ params:
     normalize_value: True
     num_actors: -1  # configured from the script (based on num_envs)
     reward_shaper:
-      scale_value: 0.01
+      scale_value: 1.0  # the env reward is already normalised (about -1.33 to +1 per step)
     normalize_advantage: True
-    gamma: 0.99
+    gamma: 0.96  # 50-step episodes at 10 Hz; squint's SAC uses 0.9
     tau : 0.95
     learning_rate: 1e-4
     lr_schedule: adaptive
@@ -70,6 +70,8 @@ params:
     truncate_grads: True
     e_clip: 0.15
     horizon_length: 24
+    # batch = num_envs x horizon_length must be divisible by minibatch_size:
+    # 1024 envs -> 1 minibatch, 4096 envs (recommended, --num_envs 4096) -> 4 minibatches
     minibatch_size: 24576
     mini_epochs: 8
     critic_coef: 4
