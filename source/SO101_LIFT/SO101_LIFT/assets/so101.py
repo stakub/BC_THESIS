@@ -38,7 +38,11 @@ SO101_CFG = ArticulationCfg(
         usd_path=f"{here}/files/SO-ARM101-USD.usd",
         activate_contact_sensors=True,  # required by the contact sensor used for grasp detection
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
-            disable_gravity=False,
+            # The soft PD gains let the arm sag under gravity, and the relative-mode IK then starts every step
+            # from the sagged pose, so the arm drifts down even with zero actions. Disabling gravity on the
+            # robot models a joint controller that fully compensates gravity (like the real servos' stiff
+            # position loop). Same approach as Isaac Lab's FRANKA_PANDA_HIGH_PD_CFG for differential IK.
+            disable_gravity=True,
             max_depenetration_velocity=5.0,
         ),
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
