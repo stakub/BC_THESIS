@@ -238,9 +238,14 @@ class RewardsCfg:
 
 @configclass
 class TerminationsCfg:
-    """squint trains with ignore_terminations=True: episodes only end on the time limit."""
+    """squint trains with ignore_terminations=True: episodes only end on the time limit.
+
+    The only other termination is a safety net for physics glitches (NaN / exploded states), which would
+    otherwise feed NaN into the RL algorithm. Its frequency is logged as Episode_Termination/invalid_state.
+    """
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
+    invalid_state = DoneTerm(func=mdp.invalid_state, params={"max_cube_offset": 1.5})
 
 
 ##
