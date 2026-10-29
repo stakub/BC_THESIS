@@ -96,7 +96,9 @@ def lift_info(env: ManagerBasedRLEnv) -> dict[str, torch.Tensor]:
 
     cube_pos = cube.data.root_pos_w
     tcp_pos = ee_frame.data.target_pos_w[:, 0, :]
-    tcp_to_cube_dist = torch.linalg.norm(cube_pos - tcp_pos, dim=-1)
+    # NaN-safe: an env whose physics blew up gets "far away" distances for the one step before the
+    # invalid_state termination resets it (comparisons with NaN already give False for the flags)
+    tcp_to_cube_dist = torch.nan_to_num(torch.linalg.norm(cube_pos - tcp_pos, dim=-1), nan=10.0, posinf=10.0)
 
     # --- contacts of the two fingers ---
     finger_ids = _finger_body_ids(env, sensor)
@@ -120,7 +122,9 @@ def lift_info(env: ManagerBasedRLEnv) -> dict[str, torch.Tensor]:
     # --- distance of the joint *target* (here: the IK solution) to the rest pose, arm joints only ---
     arm_ids = _arm_joint_ids(env, robot)
     rest_qpos = robot.data.default_joint_pos[:, arm_ids]
-    distance_to_rest_qpos = torch.linalg.norm(robot.data.joint_pos_target[:, arm_ids] - rest_qpos, dim=-1)
+    distance_to_rest_qpos = torch.nan_to_num(
+        torch.linalg.norm(robot.data.joint_pos_target[:, arm_ids] - rest_qpos, dim=-1), nan=10.0, posinf=10.0
+    )
     reached_rest_qpos = distance_to_rest_qpos < REST_QPOS_THRESHOLD
 
     # --- lifted: squint uses z >= half_size + 1e-3 (table at z=0). We do not hard-code the table height,
