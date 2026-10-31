@@ -13,6 +13,16 @@ if TYPE_CHECKING:
     from isaaclab.sensors import FrameTransformer
 
 
+def tcp_pos_w(env: ManagerBasedRLEnv, ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame")) -> torch.Tensor:
+    """Tool center point in the world frame: midpoint between the two fingertips (squint's ``tcp_pos``).
+
+    The ee_frame sensor tracks the moving and the fixed fingertip; their mean stays between the fingers however
+    far the gripper is open.
+    """
+    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
+    return ee_frame.data.target_pos_w.mean(dim=1)
+
+
 def object_position_in_robot_root_frame(
     env: ManagerBasedRLEnv,
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
@@ -49,10 +59,9 @@ def tcp_to_object_in_robot_root_frame(
     """Vector from the gripper TCP to the object, expressed in the robot's root frame."""
     robot: RigidObject = env.scene[robot_cfg.name]
     object: RigidObject = env.scene[object_cfg.name]
-    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
     object_pos_b, _ = subtract_frame_transforms(robot.data.root_pos_w, robot.data.root_quat_w, object.data.root_pos_w)
     tcp_pos_b, _ = subtract_frame_transforms(
-        robot.data.root_pos_w, robot.data.root_quat_w, ee_frame.data.target_pos_w[:, 0, :]
+        robot.data.root_pos_w, robot.data.root_quat_w, tcp_pos_w(env, ee_frame_cfg)
     )
     return object_pos_b - tcp_pos_b
 

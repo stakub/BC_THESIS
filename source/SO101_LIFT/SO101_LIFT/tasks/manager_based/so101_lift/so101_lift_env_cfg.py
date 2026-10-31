@@ -69,15 +69,22 @@ ARM_URDF = "/opt/IsaacSim/custom_projects/so-101/SO-ARM100/Simulation/SO101/so10
 class So101LiftSceneCfg(InteractiveSceneCfg):
     """Configuration for the SO-101 lift scene."""
 
-    # tool center point (between the fingers)
+    # the two fingertips; the TCP is their midpoint (squint's tcp_pos), see mdp.tcp_pos_w
     ee_frame = FrameTransformerCfg(
         prim_path="{ENV_REGEX_NS}/Robot/base",
         target_frames=[
             FrameTransformerCfg.FrameCfg(
                 prim_path="{ENV_REGEX_NS}/Robot/jaw",
-                name="ee_frame",
+                name="moving_tip",
                 offset=OffsetCfg(pos=(-0.02, -0.045, 0.0))
-            )
+            ),
+            # where the moving tip is when the gripper is closed (Jaw = -0.175 rad), expressed in the fixed jaw's
+            # frame; measured with scripts/rl_games/debug_grasp.py
+            FrameTransformerCfg.FrameCfg(
+                prim_path="{ENV_REGEX_NS}/Robot/gripper",
+                name="fixed_tip",
+                offset=OffsetCfg(pos=(-0.007, 0.019, -0.064))
+            ),
         ]
     )
 
@@ -128,7 +135,11 @@ class ActionsCfg:
                                                             use_relative_mode=True,
                                                             ik_method="dls"
                                                         ))
-    gripper_action = JointPositionActionCfg(asset_name="robot", joint_names=SO101_GRIPPER_JOINTS, scale=0.5)
+    # actions [-1, 1] -> Jaw target [-0.175, 1.225] rad: from fully closed to ~80 deg open (the joint allows 100 deg).
+    # The previous default-offset mapping only opened to 0.35 rad, a ~2.6 cm gap, too small for the 3 cm cube.
+    gripper_action = JointPositionActionCfg(
+        asset_name="robot", joint_names=SO101_GRIPPER_JOINTS, scale=0.7, offset=0.525, use_default_offset=False
+    )
 
 
 @configclass

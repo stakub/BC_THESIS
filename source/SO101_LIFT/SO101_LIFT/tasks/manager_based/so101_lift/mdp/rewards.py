@@ -22,14 +22,16 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from isaaclab.managers import ManagerTermBase, RewardTermCfg
+from isaaclab.managers import ManagerTermBase, RewardTermCfg, SceneEntityCfg
 
 from SO101_LIFT.assets.so101 import SO101_FINGER_BODIES, SO101_IK_JOINTS
+
+from .observations import tcp_pos_w
 
 if TYPE_CHECKING:
     from isaaclab.assets import Articulation, RigidObject
     from isaaclab.envs import ManagerBasedRLEnv
-    from isaaclab.sensors import ContactSensor, FrameTransformer
+    from isaaclab.sensors import ContactSensor
 
 # names of the scene entities / manager terms used by the squint lift task
 ROBOT_NAME = "robot"
@@ -90,12 +92,11 @@ def lift_info(env: ManagerBasedRLEnv) -> dict[str, torch.Tensor]:
 
     robot: Articulation = env.scene[ROBOT_NAME]
     cube: RigidObject = env.scene[CUBE_NAME]
-    ee_frame: FrameTransformer = env.scene[EE_FRAME_NAME]
     sensor: ContactSensor = env.scene[CONTACT_SENSOR_NAME]
     bufs = _episode_buffers(env)
 
     cube_pos = cube.data.root_pos_w
-    tcp_pos = ee_frame.data.target_pos_w[:, 0, :]
+    tcp_pos = tcp_pos_w(env, SceneEntityCfg(EE_FRAME_NAME))
     # NaN-safe: an env whose physics blew up gets "far away" distances for the one step before the
     # invalid_state termination resets it (comparisons with NaN already give False for the flags)
     tcp_to_cube_dist = torch.nan_to_num(torch.linalg.norm(cube_pos - tcp_pos, dim=-1), nan=10.0, posinf=10.0)

@@ -7,16 +7,16 @@
 
 Runs a few episodes and prints, for one env and every policy step:
 - distance TCP -> cube, gripper joint angle and target,
-- cube, TCP and moving-jaw positions in the fixed-jaw frame (where things are relative to the gripper),
+- cube and TCP positions in the fixed-jaw frame (where things are relative to the gripper), fingertip gap,
 - contact force from the cube on each finger, the angle between the two forces, other (table) forces,
 - the grasp / table / lifted flags used by the reward.
 After each episode it prints statistics over all envs (how often the fingers touch / squeeze the cube).
-The reward's TCP point (ee_frame) is shown as a marker in the viewer.
+The two fingertip frames (the TCP is their midpoint) are shown as markers in the viewer.
 
 Examples:
     # trained policy
     python scripts/rl_games/debug_grasp.py --task Template-So101-Lift-v0 --checkpoint <path to .pth>
-    # arm still, gripper opening and closing (see how the TCP point moves with the jaw)
+    # arm still, gripper opening and closing (check the fingertip markers and the gap)
     python scripts/rl_games/debug_grasp.py --task Template-So101-Lift-v0 --actions gripper_sweep
 """
 
@@ -74,6 +74,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 
 import SO101_LIFT.tasks  # noqa: F401
 from SO101_LIFT.assets.so101 import SO101_END_EFFECTOR, SO101_FINGER_BODIES, SO101_FIXED_JAW, SO101_GRIPPER_JOINTS
+from SO101_LIFT.tasks.manager_based.so101_lift.mdp import observations as lift_obs
 from SO101_LIFT.tasks.manager_based.so101_lift.mdp import rewards as lift_rewards
 
 TOUCH_FORCE = 0.05  # N, "finger touches the cube" for the statistics
@@ -98,7 +99,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
         agent_cfg["params"]["seed"] = args_cli.seed
     env_cfg.seed = agent_cfg["params"]["seed"]
 
-    # show the reward's TCP point (ee_frame) in the viewer
+    # show the fingertip frames (ee_frame) in the viewer
     env_cfg.scene.ee_frame.debug_vis = True
     env_cfg.scene.ee_frame.visualizer_cfg.markers["frame"].scale = (args_cli.marker_scale,) * 3
 
@@ -138,7 +139,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
     e = args_cli.debug_env
 
     fixed_id = robot.find_bodies(SO101_FIXED_JAW)[0][0]
-    moving_id = robot.find_bodies(SO101_END_EFFECTOR)[0][0]
     jaw_id = robot.find_joints(SO101_GRIPPER_JOINTS)[0][0]
     finger_ids = [sensor.body_names.index(n) for n in SO101_FINGER_BODIES]
 
@@ -172,7 +172,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
 
         print(f"\n--- episode {episode} ---")
         print(
-            "step | tcp-cube | jaw q / target |      cube@jaw      |      tcp@jaw       |    moving jaw@jaw  "
+            "step | tcp-cube | jaw q / target |      cube@jaw      |      tcp@jaw       | gap "
             "| F_cube fix/mov |  cos  | F_other fix/mov | G T L"
         )
         for t in range(max_steps):
@@ -204,8 +204,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
                 jaw_pos_w = robot.data.body_pos_w[:, fixed_id]
                 jaw_quat_w = robot.data.body_quat_w[:, fixed_id]
                 cube_j, _ = subtract_frame_transforms(jaw_pos_w, jaw_quat_w, cube.data.root_pos_w)
-                tcp_j, _ = subtract_frame_transforms(jaw_pos_w, jaw_quat_w, ee_frame.data.target_pos_w[:, 0, :])
-                moving_j, _ = subtract_frame_transforms(jaw_pos_w, jaw_quat_w, robot.data.body_pos_w[:, moving_id])
+                tcp_j, _ = subtract_frame_transforms(jaw_pos_w, jaw_quat_w, lift_obs.tcp_pos_w(isaac_env))
+                tips = ee_frame.data.target_pos_w
+                gap = torch.linalg.norm(tips[:, 0] - tips[:, 1], dim=-1)
 
                 touching = f_cube_norm > TOUCH_FORCE
                 touch_both += touching.all(dim=-1).float()
@@ -217,7 +218,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
                 print(
                     f"{t:4d} | {info['tcp_to_cube_dist'][e] * 100:6.1f}cm "
                     f"| {robot.data.joint_pos[e, jaw_id]:6.3f} / {robot.data.joint_pos_target[e, jaw_id]:6.3f} "
-                    f"| {fmt(cube_j[e])} | {fmt(tcp_j[e])} | {fmt(moving_j[e])} "
+                    f"| {fmt(cube_j[e])} | {fmt(tcp_j[e])} | {gap[e] * 100:4.1f}cm "
                     f"| {f_cube_norm[e, 0]:6.2f} {f_cube_norm[e, 1]:6.2f} | {cos[e]:5.2f} "
                     f"| {f_other[e, 0]:6.2f} {f_other[e, 1]:6.2f}  "
                     f"| {int(info['is_item_grasped'][e])} {int(info['robot_touching_table'][e])} "
