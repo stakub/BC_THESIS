@@ -9,7 +9,7 @@ Differences to squint:
 - the arm is controlled with differential IK (relative end-effector pose) instead of joint-target deltas,
 - the policy observes the cube through ground-truth state instead of the 16x16 wrist camera image,
 - physics engine is Isaac Lab / PhysX instead of ManiSkill, so the grasp/table checks are re-implemented
-  with a contact sensor (see mdp/rewards.py).
+  with contact sensors on the fingers (see mdp/rewards.py).
 """
 
 import math
@@ -39,7 +39,7 @@ from . import mdp
 
 from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from ....assets.so101 import (
-    SO101_CFG, SO101_IK_JOINTS, SO101_GRIPPER_JOINTS, SO101_FIXED_JAW, SO101_FINGER_BODIES
+    SO101_CFG, SO101_IK_JOINTS, SO101_GRIPPER_JOINTS, SO101_END_EFFECTOR, SO101_FIXED_JAW, SO101_FINGER_BODIES
 )
 from ....assets.cube import CUBE_CFG
 
@@ -91,9 +91,16 @@ class So101LiftSceneCfg(InteractiveSceneCfg):
     # robot
     robot: ArticulationCfg = SO101_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-    # contact forces on the robot links; the per-cube forces (force_matrix_w) are used for the grasp check
-    robot_contacts = ContactSensorCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/.*",
+    # contact forces on the two fingers; the force from the cube (force_matrix_w) is used for the grasp check.
+    # PhysX can only filter contacts for one sensor body per env, so each finger gets its own sensor.
+    fixed_jaw_contacts = ContactSensorCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/" + SO101_FIXED_JAW,
+        filter_prim_paths_expr=["{ENV_REGEX_NS}/Cube"],
+        update_period=0.0,
+        history_length=0,
+    )
+    moving_jaw_contacts = ContactSensorCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/" + SO101_END_EFFECTOR,
         filter_prim_paths_expr=["{ENV_REGEX_NS}/Cube"],
         update_period=0.0,
         history_length=0,
