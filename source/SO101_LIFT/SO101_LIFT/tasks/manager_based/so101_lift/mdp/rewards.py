@@ -24,7 +24,7 @@ import torch
 
 from isaaclab.managers import ManagerTermBase, RewardTermCfg, SceneEntityCfg
 
-from SO101_LIFT.assets.so101 import SO101_FINGER_BODIES, SO101_IK_JOINTS
+from SO101_LIFT.assets.so101 import SO101_IK_JOINTS
 
 from .observations import tcp_pos_w
 
@@ -37,7 +37,8 @@ if TYPE_CHECKING:
 ROBOT_NAME = "robot"
 CUBE_NAME = "cube"
 EE_FRAME_NAME = "ee_frame"
-CONTACT_SENSOR_NAME = "robot_contacts"
+# contact sensors of the [fixed, moving] finger
+FINGER_SENSOR_NAMES = ("fixed_jaw_contacts", "moving_jaw_contacts")
 
 # thresholds, taken from squint (envs/lift.py and envs/robot/so101.py)
 GRASP_MIN_FORCE = 0.5  # N, per finger
@@ -48,19 +49,12 @@ REST_QPOS_THRESHOLD = 0.2  # rad (L2 over the 5 arm joints)
 LIFT_THRESHOLD = 1e-3  # m above the resting height
 
 
-def _finger_body_ids(env: ManagerBasedRLEnv, sensor: ContactSensor) -> list[int]:
-    ids = getattr(env, "_squint_finger_body_ids", None)
-    if ids is None:
-        names = sensor.body_names
-        missing = [n for n in SO101_FINGER_BODIES if n not in names]
-        if missing:
-            raise ValueError(
-                f"Finger bodies {missing} not found in the robot contact sensor. Available bodies: {names}. "
-                "Update SO101_FIXED_JAW / SO101_END_EFFECTOR in SO101_LIFT/assets/so101.py."
-            )
-        ids = [names.index(n) for n in SO101_FINGER_BODIES]
-        env._squint_finger_body_ids = ids
-    return ids
+def finger_contact_forces(env: ManagerBasedRLEnv) -> tuple[torch.Tensor, torch.Tensor]:
+    """Contact forces on the [fixed, moving] finger: (force from the cube, net force), each (N, 2, 3)."""
+    sensors: list[ContactSensor] = [env.scene[name] for name in FINGER_SENSOR_NAMES]
+    cube_forces = torch.stack([s.data.force_matrix_w[:, 0, 0, :] for s in sensors], dim=1)
+    net_forces = torch.stack([s.data.net_forces_w[:, 0, :] for s in sensors], dim=1)
+    return cube_forces, net_forces
 
 
 def _arm_joint_ids(env: ManagerBasedRLEnv, robot: Articulation) -> list[int]:
@@ -92,7 +86,6 @@ def lift_info(env: ManagerBasedRLEnv) -> dict[str, torch.Tensor]:
 
     robot: Articulation = env.scene[ROBOT_NAME]
     cube: RigidObject = env.scene[CUBE_NAME]
-    sensor: ContactSensor = env.scene[CONTACT_SENSOR_NAME]
     bufs = _episode_buffers(env)
 
     cube_pos = cube.data.root_pos_w
@@ -102,9 +95,7 @@ def lift_info(env: ManagerBasedRLEnv) -> dict[str, torch.Tensor]:
     tcp_to_cube_dist = torch.nan_to_num(torch.linalg.norm(cube_pos - tcp_pos, dim=-1), nan=10.0, posinf=10.0)
 
     # --- contacts of the two fingers ---
-    finger_ids = _finger_body_ids(env, sensor)
-    cube_forces = sensor.data.force_matrix_w[:, finger_ids, 0, :]  # (N, 2, 3) force from the cube on each finger
-    net_forces = sensor.data.net_forces_w[:, finger_ids, :]  # (N, 2, 3) force from everything
+    cube_forces, net_forces = finger_contact_forces(env)
     cube_force_norm = torch.linalg.norm(cube_forces, dim=-1)
 
     # Squint: both fingers push on the item with >= 0.5 N, and each contact force points along the finger's

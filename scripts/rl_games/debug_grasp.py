@@ -73,7 +73,7 @@ import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
 import SO101_LIFT.tasks  # noqa: F401
-from SO101_LIFT.assets.so101 import SO101_END_EFFECTOR, SO101_FINGER_BODIES, SO101_FIXED_JAW, SO101_GRIPPER_JOINTS
+from SO101_LIFT.assets.so101 import SO101_END_EFFECTOR, SO101_FIXED_JAW, SO101_GRIPPER_JOINTS
 from SO101_LIFT.tasks.manager_based.so101_lift.mdp import observations as lift_obs
 from SO101_LIFT.tasks.manager_based.so101_lift.mdp import rewards as lift_rewards
 
@@ -132,7 +132,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
     robot = isaac_env.scene["robot"]
     cube = isaac_env.scene["cube"]
     ee_frame = isaac_env.scene["ee_frame"]
-    sensor = isaac_env.scene["robot_contacts"]
+    sensors = [isaac_env.scene[name] for name in lift_rewards.FINGER_SENSOR_NAMES]
     num_envs = isaac_env.num_envs
     n_act = isaac_env.action_manager.total_action_dim
     max_steps = isaac_env.max_episode_length
@@ -140,13 +140,14 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
 
     fixed_id = robot.find_bodies(SO101_FIXED_JAW)[0][0]
     jaw_id = robot.find_joints(SO101_GRIPPER_JOINTS)[0][0]
-    finger_ids = [sensor.body_names.index(n) for n in SO101_FINGER_BODIES]
 
     print("\n================ SO-101 grasp debug ================")
     print(f"actions: {args_cli.actions}, envs: {num_envs}, printed env: {e}, episode: {max_steps} steps")
     print(f"robot bodies: {robot.body_names}")
-    print(f"contact sensor bodies: {sensor.body_names}")
-    print(f"fingers: fixed jaw '{SO101_FIXED_JAW}', moving jaw '{SO101_END_EFFECTOR}' (sensor ids {finger_ids})")
+    for name, s in zip(lift_rewards.FINGER_SENSOR_NAMES, sensors):
+        ok = s.data.force_matrix_w is not None
+        print(f"contact sensor '{name}': bodies {s.body_names}, cube filter {'OK' if ok else 'NOT WORKING'}")
+    print(f"fingers: fixed jaw '{SO101_FIXED_JAW}', moving jaw '{SO101_END_EFFECTOR}'")
     lim = robot.data.soft_joint_pos_limits[0, jaw_id]
     print(
         f"gripper joint '{SO101_GRIPPER_JOINTS[0]}': limits [{lim[0]:.3f}, {lim[1]:.3f}] rad, "
@@ -192,13 +193,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: dict):
                 # flags of this step, as computed for the reward (before a possible reset)
                 info = lift_rewards.lift_info(isaac_env)
 
-                fm = sensor.data.force_matrix_w
-                if fm is None:
-                    print("force_matrix_w is None: the contact sensor's cube filter is not working!")
-                    return
-                f_cube = fm[:, finger_ids, 0, :]
+                f_cube, f_net = lift_rewards.finger_contact_forces(isaac_env)
                 f_cube_norm = torch.linalg.norm(f_cube, dim=-1)
-                f_other = torch.linalg.norm(sensor.data.net_forces_w[:, finger_ids, :] - f_cube, dim=-1)
+                f_other = torch.linalg.norm(f_net - f_cube, dim=-1)
                 cos = torch.nn.functional.cosine_similarity(f_cube[:, 0], f_cube[:, 1], dim=-1)
 
                 jaw_pos_w = robot.data.body_pos_w[:, fixed_id]
